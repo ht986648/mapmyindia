@@ -44,6 +44,18 @@
             border-radius: 4px;
             display: none;
         }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .loading {
+            display: none;
+            margin-top: 10px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -53,6 +65,7 @@
             <input type="text" id="address" placeholder="Enter address to geocode">
         </div>
         <button onclick="searchAddress()">Search</button>
+        <div id="loading" class="loading">Searching...</div>
         <div id="result"></div>
     </div>
 
@@ -60,16 +73,25 @@
         async function searchAddress() {
             const address = document.getElementById('address').value;
             const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
             
             if (!address) {
-                alert('Please enter an address');
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<div class="error">Please enter an address</div>`;
                 return;
             }
 
             try {
+                loadingDiv.style.display = 'block';
+                resultDiv.style.display = 'none';
+
                 const response = await fetch(`/geocode?address=${encodeURIComponent(address)}`);
                 const data = await response.json();
                 
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch geocoding data');
+                }
+
                 resultDiv.style.display = 'block';
                 resultDiv.innerHTML = `
                     <h3>Results:</h3>
@@ -77,7 +99,9 @@
                 `;
             } catch (error) {
                 resultDiv.style.display = 'block';
-                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            } finally {
+                loadingDiv.style.display = 'none';
             }
         }
     </script>
